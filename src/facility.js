@@ -282,11 +282,11 @@ export function buildFacility(scene, { onEvidence, onCaught }) {
 
   /* ---------------- evidence registry ---------------- */
   const evidenceDefs = [];
-  const hitMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
+  const hitMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false, side: THREE.DoubleSide });
   function registerEvidence(def) {
     def.taken = false;
     const [x, y, z] = def.pos;
-    const target = box(group, 'evidence target', x, y, z, 1.05, 1.0, 1.05, hitMat, { cast: false, receive: false });
+    const target = box(group, 'evidence target', x, y, z, 1.05, 1.5, 1.05, hitMat, { cast: false, receive: false });
     addInteract(target, def.label, () => onEvidence(def), 'lab');
     evidenceDefs.push(def);
     return def;
@@ -677,7 +677,7 @@ export function buildFacility(scene, { onEvidence, onCaught }) {
   function wake() {
     if (AI.awake) return;
     AI.awake = true;
-    AI.chaseDelay = 2.4;
+    AI.chaseDelay = 2.0;
     creature.awake = true;
     gateOpen = true;
     tankShell.visible = false;
@@ -745,7 +745,7 @@ export function buildFacility(scene, { onEvidence, onCaught }) {
     const target = AI.path.length ? AI.path[0] : { x: playerPos.x, z: playerPos.z };
     const dx = target.x - c.position.x, dz = target.z - c.position.z;
     const dist = Math.hypot(dx, dz) || 1;
-    const speed = 2.15;
+    const speed = 3.2;
     c.position.x += dx / dist * speed * dt;
     c.position.z += dz / dist * speed * dt;
     c.lookAt(playerPos.x, c.position.y + 1.3, playerPos.z);

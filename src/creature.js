@@ -207,7 +207,7 @@ export function buildCreature(parent) {
 
 export function animateCreature(c, dt, t) {
   const awake = c.awake;
-  const speed = awake ? (c.moving ? 7.4 : 2.1) : 0.8;
+  const speed = awake ? (c.moving ? 8.6 : 2.1) : 0.8;
   c.phase += dt * speed;
   const p = c.phase;
   const breathe = Math.sin(t * 1.4) * 0.012;

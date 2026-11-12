@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import './style.css';
 import { mat, box, sphere, cylinder, light, addInteract, interactables, solids, blocked } from './kit.js';
 import { buildFacility } from './facility.js';
+import { audio } from './audio.js';
 
 /* ------------------------------------------------------------------ *
  *  DEAD AIR — NIGHT SHIFT
@@ -49,6 +50,7 @@ let yaw = 0, pitch = 0;
 let flashlightOn = true;
 let hasCode = false, doorOpened = false, evidence = 0, entityAlert = false;
 let gameEnded = false, toastTimer = 0, elapsed = 0;
+let movedThisFrame = 0;
 let facility = null;
 
 const ambient = new THREE.HemisphereLight(0x9ca9aa, 0x151515, 0.4);
@@ -82,12 +84,12 @@ function buildRoom() {
   box(room, 'ceiling', 0, 4.8, 0, 12, 0.25, 12, mat('ceiling', 0x3f3d37));
   box(room, 'back wall', 0, 2.4, 5.95, 12, 4.8, 0.22, wall);
   box(room, 'left wall', -5.95, 2.4, 0, 0.22, 4.8, 12, mat('left wall', 0x5d594f));
-  box(room, 'right wall front', 5.95, 2.4, -4.8, 0.22, 4.8, 2.4, wall);
-  box(room, 'right wall back', 5.95, 2.4, 4.8, 0.22, 4.8, 2.4, wall);
-  box(room, 'right wall lintel', 5.95, 4.15, 0, 0.22, 1.3, 2.4, wall);
+  box(room, 'right wall front', 5.95, 2.4, -3.6, 0.22, 4.8, 4.8, wall);
+  box(room, 'right wall back', 5.95, 2.4, 3.6, 0.22, 4.8, 4.8, wall);
+  box(room, 'right wall lintel', 5.95, 3.95, 0, 0.22, 1.7, 2.4, wall);
   box(room, 'safehouse door frame', 5.72, 1.55, 0, 0.16, 3.1, 2.2, mat('room frame', 0x302b25));
   box(room, 'safehouse door', 5.62, 1.5, 0, 0.12, 2.9, 1.9, mat('room door', 0x51483c));
-  const exitTarget = box(room, 'room exit target', 5.0, 1.55, 0, 1.5, 2.8, 2.2, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, colorWrite: false }));
+  const exitTarget = box(room, 'room exit target', 5.0, 1.55, 0, 1.5, 2.8, 2.2, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, colorWrite: false, side: THREE.DoubleSide }));
   addInteract(exitTarget, 'LEAVE THE SAFEHOUSE', () => changeArea('lot'), 'room');
   box(room, 'window left', -4.5, 2.4, -5.95, 3, 4.8, 0.22, wall);
   box(room, 'window right', 4.5, 2.4, -5.95, 3, 4.8, 0.22, wall);
@@ -162,7 +164,7 @@ function buildLot({ onSearchCar, onKeypad }) {
   box(lot, 'keypad', -8.98, 1.65, -24.34, 0.27, 0.54, 0.12, mat('keypad', 0x171d1d, 0.3, { emissive: 0x17302e, emissiveIntensity: 0.7 }));
   for (let r = 0; r < 3; r++) for (let c = 0; c < 2; c++)
     sphere(lot, 'keypad button', -9.06 + c * 0.12, 1.8 - r * 0.13, -24.26, 0.025, mat('keypad light', 0x6ab5a0, 0.25, { emissive: 0x397d65, emissiveIntensity: 1 }));
-  const doorTarget = box(lot, 'door interaction', -10.05, 1.7, -24.25, 2.2, 3.3, 1.4, new THREE.MeshBasicMaterial({ colorWrite: false }));
+  const doorTarget = box(lot, 'door interaction', -10.05, 1.7, -24.25, 2.2, 3.3, 1.4, new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }));
   addInteract(doorTarget, 'USE THE SERVICE KEYPAD', onKeypad, 'lot');
   for (let i = 0; i < 7; i++) box(lot, 'side corrugation', -15.67, 3.8, -17 - i * 3.4, 0.08, 6.3, 0.12, mat('side metal' + i, 0x353b38));
   box(lot, 'vent stack', -6, 13, -28, 1.4, 6, 1.4, rust);
@@ -211,7 +213,7 @@ function buildLot({ onSearchCar, onKeypad }) {
   }
   box(car, 'front bumper', 0, 0.48, -2.32, 2.15, 0.18, 0.16, chrome);
   box(car, 'rear bumper', 0, 0.48, 2.32, 2.15, 0.18, 0.16, chrome);
-  const carTarget = box(lot, 'driver interaction', 1.45, 1, 7.85, 0.9, 1.7, 1.7, new THREE.MeshBasicMaterial({ colorWrite: false }));
+  const carTarget = box(lot, 'driver interaction', 1.45, 1, 7.85, 0.9, 1.7, 1.7, new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }));
   addInteract(carTarget, "SEARCH THE DRIVER'S SEAT", onSearchCar, 'lot');
   lot.userData.lamps = [...lot.children.filter(o => o.userData.flicker)];
 }
@@ -234,6 +236,7 @@ function closeOverlays() {
 }
 function changeArea(area) {
   activeArea = area;
+  audio.setArea(area);
   room.visible = area === 'room'; lot.visible = area === 'lot'; facility.group.visible = area === 'lab';
   ui.prompt.innerHTML = '';
   if (area === 'room') {
@@ -283,6 +286,7 @@ function collectEvidence(def) {
     });
   }
   openNote(def.title, def.body);
+  audio.pickup();
   toast(`EVIDENCE ${String(evidence).padStart(2, '0')} / 05 RECOVERED`);
   if (evidence < 5) {
     setObjective('Recover the remaining evidence', `${evidence} of 5 recordings secured. Search the rooms off the halls.`);
@@ -290,12 +294,14 @@ function collectEvidence(def) {
     entityAlert = true;
     setObjective('IT IS AWAKE. RUN.', 'Get back to the entry gate. Do not stop.');
     facility.wake();
+    audio.stinger();
     flashEl.classList.remove('bang'); void flashEl.offsetWidth; flashEl.classList.add('bang');
     toast('SUBJECT 06 IS AWAKE');
   }
 }
 
 function onCaught() {
+  audio.caught();
   flashEl.classList.remove('bang'); void flashEl.offsetWidth; flashEl.classList.add('bang');
   toast('IT FOUND YOU — RUN');
   flashlightOn = false; flashlight.visible = false;
@@ -344,15 +350,18 @@ function collides(x, z) {
 }
 
 function move(dt) {
+  movedThisFrame = 0;
   let forward = (keys.has('w') || keys.has('arrowup') ? 1 : 0) - (keys.has('s') || keys.has('arrowdown') ? 1 : 0);
   let side = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
   if (!forward && !side) return;
   const length = Math.hypot(forward, side); forward /= length; side /= length;
-  const speed = (keys.has('shift') ? 5.2 : 3.0) * dt;
+  const speed = (keys.has('shift') ? 6.3 : 3.7) * dt;
   const dx = (-Math.sin(yaw) * forward + Math.cos(yaw) * side) * speed;
   const dz = (-Math.cos(yaw) * forward - Math.sin(yaw) * side) * speed;
+  const px = player.position.x, pz = player.position.z;
   if (!collides(player.position.x + dx, player.position.z)) player.position.x += dx;
   if (!collides(player.position.x, player.position.z + dz)) player.position.z += dz;
+  movedThisFrame = Math.hypot(player.position.x - px, player.position.z - pz);
 }
 
 /* ------------------------------ game loop --------------------------- */
@@ -386,6 +395,18 @@ function update(dt) {
   if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) ui.toast.classList.remove('show'); }
   const seconds = Math.floor(elapsed), clockEl = $('#clock');
   if (clockEl) clockEl.textContent = `02:${String(13 + Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+
+  const cpos = facility.creature.root.position;
+  audio.update(dt, {
+    area: activeArea,
+    moved: movedThisFrame,
+    running: keys.has('shift') && movedThisFrame > 0,
+    awake: entityAlert,
+    creatureDistance: Math.hypot(player.position.x - cpos.x, player.position.z - cpos.z),
+    paused: !ui.note.classList.contains('hidden'),
+    ended: gameEnded,
+  });
+
   updatePrompt();
 }
 
@@ -411,6 +432,7 @@ buildLot({
     if (!hasCode) { toast('THE KEYPAD NEEDS A CODE'); return; }
     if (!doorOpened) {
       doorOpened = true;
+      audio.door();
       toast('ACCESS GRANTED · 04 / 27');
       setTimeout(enterLab, 650);
     }
@@ -423,6 +445,7 @@ facility.group.visible = false;
 $('#start-button').addEventListener('click', () => {
   if (started) return;
   started = true;
+  audio.init();
   ui.menu.classList.remove('visible');
   ui.hud.classList.remove('hidden');
   ui.look.classList.remove('hidden');
@@ -451,6 +474,11 @@ document.addEventListener('keydown', e => {
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
   keys.add(k);
   if (k === 'e' && !e.repeat) tryInteract();
+  if (k === 'm' && !e.repeat) {
+    audio.init();
+    audio.setMuted(!audio.muted);
+    toast(audio.muted ? 'AUDIO MUTED' : 'AUDIO ON');
+  }
   if (k === 'f' && !e.repeat) {
     flashlightOn = !flashlightOn;
     flashlight.visible = flashlightOn;
@@ -475,6 +503,7 @@ window.__gameTest = {
   }),
   startArea: (area) => {
     started = true;
+    audio.init();
     ui.menu.classList.remove('visible');
     ui.hud.classList.remove('hidden');
     changeArea(area);
@@ -502,6 +531,8 @@ window.__gameTest = {
   wake: () => facility.wake(),
   creature: () => facility.state(),
   solids: () => solids.lab.length,
+  audio: () => ({ ready: audio.ready, muted: audio.muted, state: audio.ctx?.state ?? 'none', ...audio.counters }),
+  speed: () => (keys.has('shift') ? 6.3 : 3.7),
 };
 
 changeArea('room');
