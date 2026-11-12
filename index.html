@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#090b0d" />
+    <title>Dead Air — Night Shift</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="game-root">
+      <canvas id="scene" aria-label="First person 3D horror game"></canvas>
+      <div id="film-grain"></div>
+      <div id="vignette"></div>
+      <div id="menu-screen" class="screen visible">
+        <div class="menu-top"><span class="brand-mark">N</span><span>NORTHLINE INTERACTIVE</span><span class="menu-version">FIELD RECORDING 01 / 03</span></div>
+        <div class="menu-copy">
+          <div class="eyebrow"><i></i> A FIRST-PERSON HORROR EXPERIENCE</div>
+          <h1>DEAD<br><span>AIR</span></h1>
+          <p class="tagline">Some places don't want to be found.</p>
+          <div class="menu-rule"></div>
+          <p class="intro-copy">The road ends here. The lights are still on.<br>Find out what they were making.</p>
+          <button id="start-button" class="primary-button"><span>BEGIN NIGHT SHIFT</span><b>↗</b></button>
+          <div class="menu-foot">[ W A S D ] MOVE <span>·</span> [ MOUSE ] LOOK <span>·</span> [ E ] INTERACT</div>
+        </div>
+        <div class="menu-location"><span>40° 41' 18.2" N</span><span>ASHFORD COUNTY, 1998</span></div>
+        <div class="room-caption"><span>SAFEHOUSE</span><span>02:13 AM</span></div>
+      </div>
+      <div id="hud" class="hidden">
+        <div class="hud-top">
+          <div class="mission-card"><span class="hud-label">NIGHT SHIFT <b>01</b></span><strong id="objective">Search the car for a way inside</strong><span id="objective-sub">The factory's side door may still have power.</span></div>
+          <div class="signal"><span class="hud-label">SIGNAL</span><div class="signal-bars"><i></i><i></i><i></i><i></i><i></i></div><span>WEAK</span></div>
+        </div>
+        <div class="hud-bottom"><div id="interaction-prompt" class="interaction-prompt"></div><div class="controls-hint">WASD MOVE <span>·</span> SHIFT RUN <span>·</span> F FLASHLIGHT <span>·</span> E INTERACT</div><div class="rec-indicator"><i></i> REC <span id="clock">02:13:08</span></div></div>
+        <div id="toast" class="toast"></div>
+        <div id="note-modal" class="note-modal hidden"><div class="note-paper"><button id="close-note" aria-label="Close note">×</button><span class="note-overline">PERSONAL / DO NOT FILE</span><h2 id="note-title">Maintenance log</h2><p id="note-body"></p><span class="note-signature">— J. HOLLOWAY</span><div class="note-continue">PRESS E OR ESC TO CLOSE</div></div></div>
+        <div id="end-screen" class="end-screen hidden"><div class="end-card"><span class="eyebrow">NIGHT SHIFT / COMPLETE</span><h2>THE TAPE<br>KEEPS ROLLING.</h2><p>You made it out with the truth. But something made it out with you.</p><button id="restart-button" class="primary-button"><span>PLAY AGAIN</span><b>↻</b></button></div></div>
+      </div>
+      <div id="look-hint" class="look-hint hidden">CLICK TO LOOK AROUND <span>·</span> ESC TO RELEASE</div>
+      <div id="flash" class="flash"></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
